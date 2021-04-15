@@ -36,6 +36,6 @@ type LinkManager struct {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano()) // Seed random with current time
 
 }
