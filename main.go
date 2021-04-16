@@ -27,7 +27,7 @@ type Command struct {
 	NewClient   string `json:"new,omitempty"`
 	CloseClient string `json:"close,omitempty"`
 	NewLink     bool   `json:"newLink,omitempty"`
-	Connecting  string `json:"newLink,omitempty"`
+	Connecting  string `json:"connecting,omitempty"`
 }
 
 func main() {
