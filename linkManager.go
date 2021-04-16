@@ -23,7 +23,7 @@ func (lm LinkManager) startLinkManager() {
 		publicSockets: make(map[string]net.Conn),
 		relaySockets:  make(map[string]net.Conn),
 	}
-	go lm.relayLink.initLinkSocket(&lm)
+	go lm.relayLink.initLink(&lm)
 	select {
 	case newClient := <-lm.register:
 		fmt.Printf("New Client: %s", newClient.RemoteAddr().String())
@@ -40,12 +40,12 @@ func (lm LinkManager) startLinkManager() {
 			fmt.Println("A connection has been terminated")
 		}
 	case command := <-lm.relayLinkStatus:
-		if command.newLink {
+		if command.NewLink {
 			lm.relayLink = &Link{
 				publicSockets: make(map[string]net.Conn),
 				relaySockets:  make(map[string]net.Conn),
 			}
-			go lm.relayLink.initLinkSocket(&lm)
+			go lm.relayLink.initLink(&lm)
 		}
 	}
 }

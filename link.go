@@ -15,7 +15,7 @@ type Link struct {
 	relaySockets  map[string]net.Conn
 }
 
-func (l Link) initLinkSocket(lm *LinkManager) {
+func (l Link) initLink(lm *LinkManager) {
 	relayListener, err := net.Listen("tcp", lm.relayAddr)
 	checkErr(err)
 	for {
@@ -32,7 +32,7 @@ func (l Link) initLinkSocket(lm *LinkManager) {
 			fmt.Println("Error decoding new link's message")
 			linkSocket.Close()
 		}
-		if data.newLink {
+		if data.NewLink {
 			l.mgtSocket = linkSocket
 			go lm.listen()
 			go l.mgtListen()
@@ -78,18 +78,37 @@ func (l Link) startNewRelayListener() {
 		if err != nil {
 			newRelay.Close()
 		}
+		go l.initNewRelay(newRelay)
 	}
 }
 
-func (l Link) copyIO(relayID string) {
+func (l Link) copyIO(relayID string, public bool) {
 	for {
-		_, err := io.Copy(l.publicSockets[relayID], l.relaySockets[relayID])
-		if err != nil {
-			fmt.Println(err)
+		if public {
+			_, err := io.Copy(l.publicSockets[relayID], l.relaySockets[relayID])
+			if err != nil {
+				fmt.Println(err)
+				// TODO: Think about closing the socket, server should never close
+			}
+		} else {
+			_, err := io.Copy(l.relaySockets[relayID], l.publicSockets[relayID])
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
-		_, err = io.Copy(l.relaySockets[relayID], l.publicSockets[relayID])
-		if err != nil {
-			fmt.Println(err)
-		}
+	}
+}
+
+func (l Link) initNewRelay(socket net.Conn) {
+	data := Command{}
+	decoder := json.NewDecoder(socket)
+	err := decoder.Decode(&data)
+	if err != nil {
+		fmt.Printf("New Relay Decoding error: %s", err)
+	}
+	if _, ok := l.publicSockets[data.Connecting]; ok {
+		l.relaySockets[data.Connecting] = socket
+		go l.copyIO(data.Connecting, true)
+		go l.copyIO(data.Connecting, false)
 	}
 }
